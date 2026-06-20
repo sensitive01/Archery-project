@@ -1,0 +1,162 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root {
+  font-family: 'Outfit', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  
+  /* BRAND COLORS - CLINICAL WHITE & BLUE */
+  --brand-primary: #1E40AF; /* Royal Blue */
+  --brand-navy: #0F172A; /* Deep Navy Text */
+  --brand-blue: #3B82F6; /* Action Blue */
+  --brand-sky: #EFF6FF; /* Background Tint */
+  --text-main: #0F172A; /* High Contrast Dark */
+  --text-muted: #64748B; /* Slate Gray */
+  --bg-white: #ffffff;
+  --bg-soft: #f8fafc;
+  
+  color: var(--text-main);
+  background-color: var(--bg-white);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #ffffff;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6, b, strong {
+  font-weight: 900;
+}
+
+/* RESPONSIVE UTILITIES */
+.site-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 5%;
+}
+
+.section-wrapper {
+  padding: 100px 5%;
+}
+
+@media (max-width: 1024px) {
+  .section-wrapper {
+    padding: 80px 4%;
+  }
+}
+
+@media (max-width: 768px) {
+  .section-wrapper {
+    padding: 60px 4%;
+  }
+}
+
+.responsive-grid {
+  display: grid;
+  gap: 30px;
+}
+
+/* 3-Column to 1-Column */
+.grid-3-2-1 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+}
+
+@media (max-width: 1024px) {
+  .grid-3-2-1 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .grid-3-2-1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 4-Column to 2/1-Column */
+.grid-4-2-1 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px;
+}
+
+@media (max-width: 1024px) {
+  .grid-4-2-1 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .grid-4-2-1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Responsive Font Sizes */
+.hero-title {
+  font-size: 72px;
+  line-height: 1.1;
+}
+
+.section-title {
+  font-size: 48px;
+}
+
+@media (max-width: 1024px) {
+  .hero-title { font-size: 56px; }
+  .section-title { font-size: 38px; }
+}
+
+@media (max-width: 768px) {
+  .hero-title { font-size: 42px; }
+  .section-title { font-size: 32px; }
+}
+
+/* Mobile Nav Styles */
+.mobile-only { display: none !important; }
+.desktop-only { display: flex !important; }
+
+@media (max-width: 1024px) {
+  .mobile-only { display: flex !important; }
+  .desktop-only { display: none !important; }
+}
+
+@media (max-width: 768px) {
+  /* Infrastructure adjustment */
+  .infra-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+
+/* CUSTOM SCROLLBAR */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); border-radius: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(30, 64, 175, 0.4); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(30, 64, 175, 0.7); }
+
+/* ADMIN TABLES RESPONSIVENESS */
+.overflow-x-auto table th,
+.overflow-x-auto table td,
+div[style*="overflow-x: auto"] table th,
+div[style*="overflow-x: auto"] table td {
+  white-space: nowrap;
+}
