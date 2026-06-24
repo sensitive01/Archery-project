@@ -152,7 +152,7 @@ const Programs = () => {
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                        <span style={{ fontWeight: '500' }}>Session Duration:</span>
-                                       <span style={{ fontWeight: '700', color: '#0F172A' }}>{p.sessionDuration + ' Minutes Per Session' || 'N/A'}</span>
+                                       <span style={{ fontWeight: '700', color: '#0F172A' }}>{p.sessionDuration || 'N/A'}</span>
                                     </div>
                                     {p.schedule && (
                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

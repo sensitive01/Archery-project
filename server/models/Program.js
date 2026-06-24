@@ -10,7 +10,7 @@ const programSchema = new mongoose.Schema({
     ageGroup: String,
     equipment: String,
     schedule: String,
-    sessionDuration: Number,
+    sessionDuration: String,
     fees: Number,
     features: [String],
     image: String,

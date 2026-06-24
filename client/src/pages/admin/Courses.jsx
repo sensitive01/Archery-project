@@ -258,7 +258,7 @@ const AdminCourses = () => {
         image: formData.image,
         ageGroup: formData.ageGroup,
         schedule: formData.schedule,
-        sessionDuration: Number(formData.sessionDuration),
+        sessionDuration: formData.sessionDuration,
         equipment: formData.equipment,
         features: featureList,
         kits: (formData.kits || []).filter(k => k.name && k.name.trim() !== "").map(k => ({
@@ -635,12 +635,12 @@ const AdminCourses = () => {
                   Session Duration
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   name="sessionDuration"
                   value={formData.sessionDuration}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none transition-all placeholder-gray-400"
-                  placeholder="e.g. 60"
+                  placeholder="e.g. 60 Minutes Per Session"
                 />
               </div>
 

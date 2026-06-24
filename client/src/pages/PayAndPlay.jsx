@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Clock, Calendar, Users, Target, ArrowRight, ShieldCheck, CreditCard, User, Phone, Mail, ArrowLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { API_URL } from '../services/config';
+import { getPayAndPlaySettings } from '../services/payAndPlayService';
 import archeryRangeImg from '../assets/archery_range.png';
 import archeryBowImg from '../assets/archery_bow.png';
 import outdoorImg from "../../public/courses/oudoorimage.jpeg"
@@ -33,14 +34,15 @@ const formatTimeRange = (date) => {
   return `${formatHour(startHour)} - ${formatHour(endHour)}`;
 };
 
-const CustomTimeInput = React.forwardRef(({ value, onClick, onChange, customValue }, ref) => (
-  <input 
+const CustomTimeInput = React.forwardRef(({ value, onClick, onChange, customValue, disabled }, ref) => (
+  <input
     value={customValue || ""}
-    onClick={onClick}
+    onClick={disabled ? undefined : onClick}
     onChange={onChange}
     readOnly
-    placeholder="Select Time"
-    style={{ width: "100%", padding: "12px 12px 12px 38px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "14px", fontWeight: "600", outline: "none", color: "#0F172A", backgroundColor: "#F8FAFC", cursor: "pointer" }}
+    disabled={disabled}
+    placeholder={disabled ? "Select Date First" : "Select Time"}
+    style={{ width: "100%", padding: "12px 12px 12px 38px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "14px", fontWeight: "600", outline: "none", color: disabled ? "#94A3B8" : "#0F172A", backgroundColor: disabled ? "#E2E8F0" : "#F8FAFC", cursor: disabled ? "not-allowed" : "pointer" }}
     ref={ref}
   />
 ));
@@ -57,9 +59,28 @@ const PayAndPlay = () => {
     packageType: 'Place and Range',
     bookingType: 'Single'
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [totalPrice, setTotalPrice] = useState(0);
+  const [timings, setTimings] = useState({ weekdaySlots: [], weekendSlots: [] });
+  const [loadingTimings, setLoadingTimings] = useState(true);
+
+  useEffect(() => {
+    const fetchTimings = async () => {
+      try {
+        const data = await getPayAndPlaySettings();
+        setTimings({
+          weekdaySlots: data.weekdaySlots || [],
+          weekendSlots: data.weekendSlots || []
+        });
+      } catch (error) {
+        console.error("Failed to load timings:", error);
+      } finally {
+        setLoadingTimings(false);
+      }
+    };
+    fetchTimings();
+  }, []);
 
   const pricing = {
     'Weekday': {
@@ -84,7 +105,7 @@ const PayAndPlay = () => {
 
   const handleInputChange = (e) => {
     let { name, value } = e.target;
-    
+
     if (name === 'mobileNumber') {
       value = value.replace(/\D/g, '').slice(0, 10);
     }
@@ -99,14 +120,11 @@ const PayAndPlay = () => {
     });
   };
 
-  const timeSlots = {
-    'Weekday': ['6:00 AM - 9:00 AM'],
-    'Weekend': ['6:00 AM - 9:00 AM', '4:00 PM - 6:30 PM']
-  };
+  // Time slots are now fetched dynamically from backend
 
   const handleContinue = (e) => {
     e.preventDefault();
-    if(!formData.date || !formData.timeSlot) {
+    if (!formData.date || !formData.timeSlot) {
       toast.error("Please fill in all details including Date and Time Slot");
       return;
     }
@@ -129,7 +147,7 @@ const PayAndPlay = () => {
 
   const handleBooking = async (e) => {
     e.preventDefault();
-    if(!formData.contactName || !formData.mobileNumber || !formData.email) {
+    if (!formData.contactName || !formData.mobileNumber || !formData.email) {
       toast.error("Please fill in your contact details completely");
       return;
     }
@@ -167,16 +185,16 @@ const PayAndPlay = () => {
         handler: async function (response) {
           try {
             toast.loading("Verifying payment...", { id: "payment-verify" });
-            
+
             // 4. Save booking details along with payment info
             const saveRes = await fetch(`${API_URL}/payandplay`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ 
-                ...formData, 
-                persons: 1, 
+              body: JSON.stringify({
+                ...formData,
+                persons: 1,
                 totalPrice,
                 razorpayPaymentId: response.razorpay_payment_id,
                 razorpayOrderId: response.razorpay_order_id,
@@ -219,23 +237,23 @@ const PayAndPlay = () => {
 
       // If we got a mock key back, handle mock payment directly
       if (orderData.key_id === 'rzp_test_dummy') {
-          const mockResponse = {
-              razorpay_payment_id: `pay_mock_${Math.random().toString(36).substring(7).toUpperCase()}`,
-              razorpay_order_id: orderData.id,
-              razorpay_signature: "mock_signature_for_dev_only"
-          };
-          options.handler(mockResponse);
-          return;
+        const mockResponse = {
+          razorpay_payment_id: `pay_mock_${Math.random().toString(36).substring(7).toUpperCase()}`,
+          razorpay_order_id: orderData.id,
+          razorpay_signature: "mock_signature_for_dev_only"
+        };
+        options.handler(mockResponse);
+        return;
       }
 
       // 5. Open Razorpay checkout modal
       const rzp = new window.Razorpay(options);
-      
+
       rzp.on('payment.failed', function (response) {
         toast.error(`Payment Failed: ${response.error.description}`);
         setIsSubmitting(false);
       });
-      
+
       rzp.open();
     } catch (error) {
       console.error("Payment error:", error);
@@ -247,57 +265,55 @@ const PayAndPlay = () => {
   return (
     <div style={{ backgroundColor: "#F8FAFC", minHeight: "100vh", paddingBottom: "40px", fontFamily: "'Outfit', sans-serif" }}>
       {/* Hero Section */}
-      <section style={{ 
-          position: 'relative', 
-          minHeight: '50vh', 
-          backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.7), rgba(30, 64, 175, 0.4)), url('/ref-banner.png')`, 
-          backgroundSize: 'cover', 
-          backgroundPosition: 'center', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          textAlign: 'center',
-          color: 'white',
-          padding: '120px 5% 60px'
+      <section style={{
+        position: 'relative',
+        minHeight: '50vh',
+        backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.7), rgba(30, 64, 175, 0.4)), url('/ref-banner.png')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        color: 'white',
+        padding: '120px 5% 60px'
       }}>
         <div style={{ animation: 'fadeInDown 0.8s ease' }}>
-           <span style={{ fontSize: '12px', fontWeight: '800', letterSpacing: '4px', textTransform: 'uppercase', color: '#3B82F6' }}>START SHOOTING</span>
-           <h1 style={{ fontSize: 'clamp(36px, 8vw, 72px)', fontWeight: '900', margin: '15px 0', letterSpacing: '-2px' }}>PAY AND PLAY</h1>
-           <p style={{ fontSize: 'clamp(16px, 2.5vw, 20px)', maxWidth: '600px', margin: '0 auto', opacity: 0.9 }}>Experience the thrill of archery without long-term commitments.</p>
+          <span style={{ fontSize: '12px', fontWeight: '800', letterSpacing: '4px', textTransform: 'uppercase', color: '#3B82F6' }}>START SHOOTING</span>
+          <h1 style={{ fontSize: 'clamp(36px, 8vw, 72px)', fontWeight: '900', margin: '15px 0', letterSpacing: '-2px' }}>PAY AND PLAY</h1>
+          <p style={{ fontSize: 'clamp(16px, 2.5vw, 20px)', maxWidth: '600px', margin: '0 auto', opacity: 0.9 }}>Experience the thrill of archery without long-term commitments.</p>
         </div>
       </section>
 
       <div className="site-container" style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 15px", marginTop: "-40px", position: "relative", zIndex: 20 }}>
-        
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '25px' }} className="lg:grid-cols-3">
-          
+
           {/* Booking Form Area */}
           <div style={{ backgroundColor: "white", borderRadius: "16px", padding: "clamp(15px, 5vw, 25px)", boxShadow: "0 20px 40px rgba(0,0,0,0.05)", border: "1px solid #E2E8F0" }} className="lg:col-span-2">
-            
+
             {/* Step Indicators */}
             <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "25px", borderBottom: "1px solid #E2E8F0", paddingBottom: "15px" }}>
-               <div style={{ display: "flex", alignItems: "center", gap: "6px", color: step === 1 ? "#1E40AF" : "#94A3B8", fontWeight: "800", fontSize: "13px", textTransform: "uppercase", letterSpacing: "1px" }}>
-                  <span style={{ width: "24px", height: "24px", borderRadius: "50%", backgroundColor: step === 1 ? "#1E40AF" : "#E2E8F0", color: step === 1 ? "white" : "#94A3B8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", flexShrink: 0 }}>1</span>
-                  Session Details
-               </div>
-               <ChevronRight size={16} color="#CBD5E1" style={{ margin: "0 2px" }} />
-               <div style={{ display: "flex", alignItems: "center", gap: "6px", color: step === 2 ? "#1E40AF" : "#94A3B8", fontWeight: "800", fontSize: "13px", textTransform: "uppercase", letterSpacing: "1px" }}>
-                  <span style={{ width: "24px", height: "24px", borderRadius: "50%", backgroundColor: step === 2 ? "#1E40AF" : "#E2E8F0", color: step === 2 ? "white" : "#94A3B8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", flexShrink: 0 }}>2</span>
-                  Personal Info
-               </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", color: step === 1 ? "#1E40AF" : "#94A3B8", fontWeight: "800", fontSize: "13px", textTransform: "uppercase", letterSpacing: "1px" }}>
+                <span style={{ width: "24px", height: "24px", borderRadius: "50%", backgroundColor: step === 1 ? "#1E40AF" : "#E2E8F0", color: step === 1 ? "white" : "#94A3B8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", flexShrink: 0 }}>1</span>
+                Session Details
+              </div>
+              <ChevronRight size={16} color="#CBD5E1" style={{ margin: "0 2px" }} />
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", color: step === 2 ? "#1E40AF" : "#94A3B8", fontWeight: "800", fontSize: "13px", textTransform: "uppercase", letterSpacing: "1px" }}>
+                <span style={{ width: "24px", height: "24px", borderRadius: "50%", backgroundColor: step === 2 ? "#1E40AF" : "#E2E8F0", color: step === 2 ? "white" : "#94A3B8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", flexShrink: 0 }}>2</span>
+                Personal Info
+              </div>
             </div>
-
             {step === 1 ? (
               <form onSubmit={handleContinue} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                
                 {/* Day Type Selection */}
                 <div>
                   <label style={{ display: "block", fontSize: "11px", fontWeight: "800", color: "#64748B", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Select Day</label>
                   <div style={{ display: "flex", gap: "10px" }}>
                     {['Weekday', 'Weekend'].map(type => (
-                      <div 
+                      <div
                         key={type}
-                        onClick={() => handleInputChange({ target: { name: 'dayType', value: type }})}
+                        onClick={() => handleInputChange({ target: { name: 'dayType', value: type } })}
                         style={{
                           flex: 1,
                           padding: "12px",
@@ -317,15 +333,14 @@ const PayAndPlay = () => {
                     ))}
                   </div>
                 </div>
-
                 {/* Package Selection */}
                 <div>
                   <label style={{ display: "block", fontSize: "11px", fontWeight: "800", color: "#64748B", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Select Package</label>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "15px" }}>
                     {Object.keys(pricing[formData.dayType]).map((type) => (
-                      <div 
+                      <div
                         key={type}
-                        onClick={() => handleInputChange({ target: { name: 'packageType', value: type }})}
+                        onClick={() => handleInputChange({ target: { name: 'packageType', value: type } })}
                         style={{
                           borderRadius: "12px",
                           cursor: "pointer",
@@ -350,15 +365,14 @@ const PayAndPlay = () => {
                     ))}
                   </div>
                 </div>
-
                 {/* Booking Type */}
                 <div>
                   <label style={{ display: "block", fontSize: "11px", fontWeight: "800", color: "#64748B", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Booking Type</label>
                   <div style={{ display: "flex", gap: "8px" }}>
                     {['Single', 'Shared'].map(bType => (
-                      <div 
+                      <div
                         key={bType}
-                        onClick={() => handleInputChange({ target: { name: 'bookingType', value: bType }})}
+                        onClick={() => handleInputChange({ target: { name: 'bookingType', value: bType } })}
                         style={{
                           flex: 1,
                           padding: "10px",
@@ -387,7 +401,7 @@ const PayAndPlay = () => {
                       <div style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8", zIndex: 10 }}>
                         <Calendar size={16} />
                       </div>
-                      <DatePicker 
+                      <DatePicker
                         selected={formData.date ? new Date(formData.date) : null}
                         onChange={(date) => {
                           if (!date) {
@@ -400,12 +414,24 @@ const PayAndPlay = () => {
                           handleInputChange({ target: { name: 'date', value: dateStr } });
                         }}
                         filterDate={(date) => {
+                          if (loadingTimings) return false;
                           const day = date.getDay();
-                          if (formData.dayType === 'Weekday') {
-                            return day !== 0 && day !== 6;
-                          } else {
-                            return day === 0 || day === 6;
+                          const isWeekend = day === 0 || day === 6;
+
+                          if (formData.dayType === 'Weekday' && isWeekend) return false;
+                          if (formData.dayType === 'Weekend' && !isWeekend) return false;
+
+                          const ranges = formData.dayType === 'Weekday' ? timings.weekdaySlots : timings.weekendSlots;
+                          if (!ranges || ranges.length === 0) return false;
+
+                          const today = new Date();
+                          if (date.toDateString() === today.toDateString()) {
+                            const maxEndHour = Math.max(...ranges.map(r => r.endHour));
+                            if (today.getHours() >= maxEndHour - 1) {
+                              return false;
+                            }
                           }
+                          return true;
                         }}
                         minDate={new Date()}
                         placeholderText="Select a date"
@@ -413,21 +439,20 @@ const PayAndPlay = () => {
                         dateFormat="yyyy-MM-dd"
                         wrapperClassName="w-full"
                         customInput={
-                          <input 
+                          <input
                             style={{ width: "100%", padding: "12px 12px 12px 38px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "14px", fontWeight: "600", outline: "none", color: "#0F172A", backgroundColor: "#F8FAFC" }}
                           />
                         }
                       />
                     </div>
                   </div>
-
                   <div>
                     <label style={{ display: "block", fontSize: "11px", fontWeight: "800", color: "#64748B", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Time Slot</label>
                     <div style={{ position: "relative" }}>
                       <div style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8", zIndex: 10 }}>
                         <Clock size={16} />
                       </div>
-                      <DatePicker 
+                      <DatePicker
                         selected={formData.timeSlot ? parseTime(formData.timeSlot) : null}
                         onChange={(date) => {
                           if (!date) {
@@ -441,33 +466,45 @@ const PayAndPlay = () => {
                         timeIntervals={60}
                         timeCaption="Time"
                         filterTime={(time) => {
+                          if (loadingTimings) return false;
                           const hour = time.getHours();
-                          if (formData.dayType === 'Weekday') {
-                            return hour >= 6 && hour <= 8;
-                          } else {
-                            return (hour >= 6 && hour <= 8) || (hour >= 16 && hour <= 17);
+
+
+                          if (formData.date) {
+                            const selectedDate = new Date(formData.date);
+                            const today = new Date();
+                            if (selectedDate.toDateString() === today.toDateString()) {
+                              if (hour <= today.getHours()) {
+                                return false;
+                              }
+                            }
                           }
+
+                          const ranges = formData.dayType === 'Weekday' ? timings.weekdaySlots : timings.weekendSlots;
+                          if (!ranges || ranges.length === 0) return false;
+                          return ranges.some(range => hour >= range.startHour && hour < range.endHour);
                         }}
                         required
+                        disabled={!formData.date}
                         wrapperClassName="w-full"
-                        customInput={<CustomTimeInput customValue={formData.timeSlot} />}
+                        customInput={<CustomTimeInput customValue={formData.timeSlot} disabled={!formData.date} />}
                       />
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Continue Button */}
-                <button 
+                <button
                   type="submit"
-                  style={{ 
-                    width: "100%", 
-                    backgroundColor: "#1E40AF", 
-                    color: "white", 
-                    padding: "16px", 
-                    borderRadius: "10px", 
-                    border: "none", 
-                    fontWeight: "800", 
-                    fontSize: "15px", 
+                  style={{
+                    width: "100%",
+                    backgroundColor: "#1E40AF",
+                    color: "white",
+                    padding: "16px",
+                    borderRadius: "10px",
+                    border: "none",
+                    fontWeight: "800",
+                    fontSize: "15px",
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
@@ -483,7 +520,7 @@ const PayAndPlay = () => {
               </form>
             ) : (
               <form onSubmit={handleBooking} style={{ display: "flex", flexDirection: "column", gap: "20px", animation: "fadeIn 0.3s ease" }}>
-                
+
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px", cursor: "pointer", color: "#64748B", fontSize: "14px", fontWeight: "600" }} onClick={() => setStep(1)} className="hover:text-brand-blue">
                   <ArrowLeft size={16} /> Back to Session Details
                 </div>
@@ -494,8 +531,8 @@ const PayAndPlay = () => {
                     <div style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8" }}>
                       <User size={16} />
                     </div>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       name="contactName"
                       value={formData.contactName}
                       onChange={handleInputChange}
@@ -512,8 +549,8 @@ const PayAndPlay = () => {
                     <div style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8" }}>
                       <Phone size={16} />
                     </div>
-                    <input 
-                      type="tel" 
+                    <input
+                      type="tel"
                       name="mobileNumber"
                       value={formData.mobileNumber}
                       onChange={handleInputChange}
@@ -530,8 +567,8 @@ const PayAndPlay = () => {
                     <div style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8" }}>
                       <Mail size={16} />
                     </div>
-                    <input 
-                      type="email" 
+                    <input
+                      type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
@@ -542,18 +579,18 @@ const PayAndPlay = () => {
                   </div>
                 </div>
 
-                <button 
+                <button
                   type="submit"
                   disabled={isSubmitting}
-                  style={{ 
-                    width: "100%", 
-                    backgroundColor: isSubmitting ? "#94A3B8" : "#3B82F6", 
-                    color: "white", 
-                    padding: "16px", 
-                    borderRadius: "10px", 
-                    border: "none", 
-                    fontWeight: "800", 
-                    fontSize: "15px", 
+                  style={{
+                    width: "100%",
+                    backgroundColor: isSubmitting ? "#94A3B8" : "#3B82F6",
+                    color: "white",
+                    padding: "16px",
+                    borderRadius: "10px",
+                    border: "none",
+                    fontWeight: "800",
+                    fontSize: "15px",
                     cursor: isSubmitting ? "not-allowed" : "pointer",
                     display: "flex",
                     alignItems: "center",
@@ -578,7 +615,7 @@ const PayAndPlay = () => {
               </h3>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "15px" }}>
-                
+
                 {/* Booking Details Section */}
                 <div style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "15px", marginBottom: "5px", display: "flex", flexDirection: "column", gap: "10px", fontSize: "14px", color: "rgba(255,255,255,0.8)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -614,7 +651,6 @@ const PayAndPlay = () => {
               </div>
             </div>
           </div>
-
         </div>
       </div>
 

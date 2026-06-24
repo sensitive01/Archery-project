@@ -2,7 +2,46 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const PayAndPlay = require('../models/PayAndPlay');
+const PayAndPlaySettings = require('../models/PayAndPlaySettings');
 const { protect } = require('../middlewares/authMiddleware');
+
+// @route   GET /api/payandplay/settings
+// @desc    Get Pay & Play timings settings
+// @access  Public
+router.get('/settings', async (req, res) => {
+    try {
+        let settings = await PayAndPlaySettings.findOne();
+        if (!settings) {
+            settings = await PayAndPlaySettings.create({});
+        }
+        res.status(200).json(settings);
+    } catch (err) {
+        console.error('Error fetching settings:', err);
+        res.status(500).json({ message: 'Server error while fetching settings' });
+    }
+});
+
+// @route   PUT /api/payandplay/settings
+// @desc    Update Pay & Play timings settings
+// @access  Protected
+router.put('/settings', protect, async (req, res) => {
+    try {
+        const { weekdaySlots, weekendSlots } = req.body;
+        let settings = await PayAndPlaySettings.findOne();
+        if (settings) {
+            settings.weekdaySlots = weekdaySlots || settings.weekdaySlots;
+            settings.weekendSlots = weekendSlots || settings.weekendSlots;
+            const updatedSettings = await settings.save();
+            res.status(200).json(updatedSettings);
+        } else {
+            settings = await PayAndPlaySettings.create({ weekdaySlots, weekendSlots });
+            res.status(201).json(settings);
+        }
+    } catch (err) {
+        console.error('Error updating settings:', err);
+        res.status(500).json({ message: 'Server error while updating settings' });
+    }
+});
 
 // @route   POST /api/payandplay
 // @desc    Create a new Pay & Play booking
