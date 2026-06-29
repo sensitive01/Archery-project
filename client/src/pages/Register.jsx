@@ -695,7 +695,7 @@ const Register = () => {
                       <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '15px' }}>
                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#0F172A', marginBottom: '15px' }}>
                             <Box size={18} style={{ color: '#1E40AF' }} />
-                            <h4 style={{ fontSize: '16px', fontWeight: '800' }}>PROFESSIONAL ARCHERY EQUIPMENT (OPTIONAL)</h4>
+                            <h4 style={{ fontSize: '16px', fontWeight: '800' }}>BEGINNER BASIC BOW</h4>
                          </div>
                          <p style={{ color: '#64748B', fontSize: '12px', marginBottom: '15px' }}>Acquire official archery bows or protective gear alongside your course enrolment. Highly recommended by coaches.</p>
                          

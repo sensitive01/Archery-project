@@ -61,7 +61,7 @@ exports.updateUser = async (req, res) => {
         });
 
         await user.save();
-        
+
         // Re-fetch to populate refs before returning
         const updatedUser = await User.findById(user._id)
             .populate('enrolledPrograms')
@@ -71,7 +71,7 @@ exports.updateUser = async (req, res) => {
                 select: 'name days startDate sessionDates time location program'
             })
             .select('-password');
-            
+
         res.json(updatedUser);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -149,7 +149,7 @@ exports.createCoach = async (req, res) => {
 exports.updateCoach = async (req, res) => {
     try {
         const { firstName, lastName, email, mobile, experience, specialization, password, profilePic, bio } = req.body;
-        
+
         const coach = await User.findById(req.params.id);
         if (!coach || coach.role !== 'coach') {
             return res.status(404).json({ message: 'Coach not found' });
@@ -207,14 +207,14 @@ exports.deleteStudent = async (req, res) => {
         if (!student || student.role !== 'student') {
             return res.status(404).json({ message: 'Student not found' });
         }
-        
+
         // Remove student reference from any batches
         const Batch = require('../models/Batch');
         await Batch.updateMany(
             { students: req.params.id },
             { $pull: { students: req.params.id } }
         );
-        
+
         await User.findByIdAndDelete(req.params.id);
         res.json({ message: 'Student deleted successfully' });
     } catch (error) {

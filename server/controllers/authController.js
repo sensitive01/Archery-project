@@ -149,7 +149,7 @@ exports.registerStudent = async (req, res) => {
         }
 
         const studentId = await generateStudentId();
-        
+
         // Generate a random temporary password
         const tempPassword = `TEMP-${Math.floor(100000 + Math.random() * 900000)}`;
         const salt = await bcrypt.genSalt(10);
@@ -200,7 +200,7 @@ exports.registerStudent = async (req, res) => {
                 type: 'registration',
                 link: '/admin/members'
             });
-        } catch(err) { console.error('Notification error:', err); }
+        } catch (err) { console.error('Notification error:', err); }
 
         // ---- Calculate amount in Rupees ----
         // paymentDetails.amount comes from Razorpay in paise, or from frontend as rupees * 100
@@ -310,7 +310,7 @@ exports.registerStudent = async (req, res) => {
                     user.batch = batchId;
                     await user.save();
                     console.log('[REGISTER] User batch reference set and attendance schedule initialized');
-                    
+
                     // Notify Admin of batch assignment
                     try {
                         const { createNotification } = require('./notificationController');
@@ -321,7 +321,7 @@ exports.registerStudent = async (req, res) => {
                             type: 'batch',
                             link: '/admin/batches'
                         });
-                    } catch(err) { console.error('Notification error:', err); }
+                    } catch (err) { console.error('Notification error:', err); }
                 }
             } catch (batchErr) {
                 console.error('[REGISTER] Batch assignment error (non-fatal):', batchErr.message);
@@ -436,12 +436,12 @@ exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email })
-      .populate('enrolledPrograms')
-      .populate({
-        path: 'batch',
-        populate: { path: 'program', select: 'title totalClasses schedule' },
-        select: 'name days startDate sessionDates time location program'
-      });
+            .populate('enrolledPrograms')
+            .populate({
+                path: 'batch',
+                populate: { path: 'program', select: 'title totalClasses schedule' },
+                select: 'name days startDate sessionDates time location program'
+            });
 
         if (!user) {
             // User not found - email not registered
@@ -515,19 +515,19 @@ exports.resetPassword = async (req, res) => {
 exports.forgotPasswordReset = async (req, res) => {
     try {
         const { email, otp, newPassword } = req.body;
-        
+
         if (!email || !otp || !newPassword) {
-             return res.status(400).json({ success: false, message: 'Email, OTP, and new password are required' });
+            return res.status(400).json({ success: false, message: 'Email, OTP, and new password are required' });
         }
 
         const validOtp = await Otp.findOne({ email, otp });
         if (!validOtp && otp !== '0000') {
-             return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+            return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
         }
 
         const user = await User.findOne({ email });
         if (!user) {
-             return res.status(404).json({ success: false, message: 'User not found' });
+            return res.status(404).json({ success: false, message: 'User not found' });
         }
 
         const salt = await bcrypt.genSalt(10);

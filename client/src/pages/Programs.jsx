@@ -131,7 +131,7 @@ const Programs = () => {
                               {fees && <span style={{ fontWeight: '800', fontSize: '18px', color: '#0F172A' }}>₹{totalClasses ? `${Math.round(fees / totalClasses)} / session` : fees}</span>}
                            </div>
                            <h3 style={{ fontSize: '22px', fontWeight: '900', color: '#0F172A', marginBottom: '15px' }}>{title}</h3>
-                           <p style={{ color: '#64748B', fontSize: '14px', lineHeight: '1.7', marginBottom: '20px', flexGrow: 1 }}>{desc}</p>
+                           <p style={{ color: '#64748B', fontSize: '14px', lineHeight: '1.6', marginBottom: '20px', flexGrow: 1, textAlign: 'justify' }}>{desc}</p>
 
                            {(duration !== "N/A" || totalClasses || fees || p.schedule || p.sessionDuration || p.ageGroup || p.equipment || (p.kits && p.kits.length > 0)) && (
                               <div style={{

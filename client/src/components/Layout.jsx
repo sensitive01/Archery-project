@@ -324,7 +324,7 @@ const Layout = () => {
                      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <div style={{ display: 'flex', gap: '15px' }}>
                            <MapPin size={18} color="#1E40AF" style={{ flexShrink: 0 }} />
-                           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', margin: 0 }}>BSK 6th Stage, Bengaluru, KA 560062</p>
+                           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', margin: 0 }}>Kanakapura Main road, Bengaluru, KA 560062</p>
                         </div>
                         <div style={{ display: 'flex', gap: '15px' }}>
                            <Phone size={18} color="#1E40AF" />
