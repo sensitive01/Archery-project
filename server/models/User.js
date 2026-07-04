@@ -34,6 +34,10 @@ const userSchema = new mongoose.Schema({
     gender: { type: String, enum: ['Male', 'Female', 'Other'] },
     bloodGroup: { type: String },
     aadhaar: { type: String },
+    aaiId: { type: String },
+    competitionsAttended: { type: Number, default: 0 },
+    competitionResults: { type: String },
+    studentPhoto: { type: String },
 
     // Category
     category: { type: String, enum: ['Student', 'Corporate Employee', 'Professional', 'Other'] },

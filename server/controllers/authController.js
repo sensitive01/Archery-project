@@ -136,7 +136,11 @@ exports.registerStudent = async (req, res) => {
             previousExperience,
             previousExperienceDetails,
             batchId,
-            equipmentId
+            equipmentId,
+            aaiId,
+            competitionsAttended,
+            competitionResults,
+            studentPhoto
         } = req.body;
 
         if (!firstName || !lastName || !email) {
@@ -182,6 +186,10 @@ exports.registerStudent = async (req, res) => {
             preferredBatch: preferredBatch || 'Weekday',
             previousExperience: previousExperience === true || previousExperience === 'Yes',
             previousExperienceDetails: previousExperienceDetails || null,
+            aaiId: aaiId || null,
+            competitionsAttended: competitionsAttended ? Number(competitionsAttended) : 0,
+            competitionResults: competitionResults || null,
+            studentPhoto: studentPhoto || null,
             paymentId: paymentDetails?.razorpay_payment_id || `ARPAY${Date.now()}`,
             enrolledPrograms: programId ? [programId] : []
         };
